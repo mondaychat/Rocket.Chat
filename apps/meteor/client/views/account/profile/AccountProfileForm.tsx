@@ -212,185 +212,129 @@ const AccountProfileForm = ({ values, handlers, user, settings, onSaveStateChang
 	return (
 		<Box is='form' autoComplete='off' onSubmit={handleSubmit} {...props}>
 			<FieldGroup>
-				{useMemo(
-					() => (
-						<Field>
-							<UserAvatarEditor
-								etag={user?.avatarETag}
-								currentUsername={user?.username}
-								username={username}
-								setAvatarObj={handleAvatar}
-								disabled={!allowUserAvatarChange}
-								suggestions={avatarSuggestions as any}
-							/>
-						</Field>
-					),
-					[username, user?.username, handleAvatar, allowUserAvatarChange, avatarSuggestions, user?.avatarETag],
-				)}
+				<Field>
+					<UserAvatarEditor
+						etag={user?.avatarETag}
+						currentUsername={user?.username}
+						username={username}
+						setAvatarObj={handleAvatar}
+						disabled={!allowUserAvatarChange}
+						suggestions={avatarSuggestions as any}
+					/>
+				</Field>
 				<Box display='flex' flexDirection='row' justifyContent='space-between'>
-					{useMemo(
-						() => (
-							<Field mie='x8' flexShrink={1}>
-								<Field.Label flexGrow={0}>{t('Name')}</Field.Label>
-								<Field.Row>
-									<TextInput error={nameError} disabled={!allowRealNameChange} flexGrow={1} value={realname} onChange={handleRealname} />
-								</Field.Row>
-								{!allowRealNameChange && <Field.Hint>{t('RealName_Change_Disabled')}</Field.Hint>}
-								<Field.Error>{nameError}</Field.Error>
-							</Field>
-						),
-						[t, realname, handleRealname, allowRealNameChange, nameError],
-					)}
-					{useMemo(
-						() => (
-							<Field mis='x8' flexShrink={1}>
-								<Field.Label flexGrow={0}>{t('Username')}</Field.Label>
-								<Field.Row>
-									<TextInput
-										error={usernameError}
-										disabled={!canChangeUsername}
-										flexGrow={1}
-										value={username}
-										onChange={handleUsername}
-										addon={<Icon name='at' size='x20' />}
-									/>
-								</Field.Row>
-								{!canChangeUsername && <Field.Hint>{t('Username_Change_Disabled')}</Field.Hint>}
-								<Field.Error>{usernameError}</Field.Error>
-							</Field>
-						),
-						[t, username, handleUsername, canChangeUsername, usernameError],
-					)}
+					<Field mie='x8' flexShrink={1}>
+						<Field.Label flexGrow={0}>{t('Name')}</Field.Label>
+						<Field.Row>
+							<TextInput error={nameError} disabled={!allowRealNameChange} flexGrow={1} value={realname} onChange={handleRealname} />
+						</Field.Row>
+						{!allowRealNameChange && <Field.Hint>{t('RealName_Change_Disabled')}</Field.Hint>}
+						<Field.Error>{nameError}</Field.Error>
+					</Field>
+					<Field mis='x8' flexShrink={1}>
+						<Field.Label flexGrow={0}>{t('Username')}</Field.Label>
+						<Field.Row>
+							<TextInput
+								error={usernameError}
+								disabled={!canChangeUsername}
+								flexGrow={1}
+								value={username}
+								onChange={handleUsername}
+								addon={<Icon name='at' size='x20' />}
+							/>
+						</Field.Row>
+						{!canChangeUsername && <Field.Hint>{t('Username_Change_Disabled')}</Field.Hint>}
+						<Field.Error>{usernameError}</Field.Error>
+					</Field>
 				</Box>
-				{useMemo(
-					() => (
-						<Field>
-							<Field.Label>{t('StatusMessage')}</Field.Label>
-							<Field.Row>
-								<TextInput
-									error={statusTextError}
-									disabled={!allowUserStatusMessageChange}
-									flexGrow={1}
-									value={statusText}
-									onChange={handleStatusText}
-									placeholder={t('StatusMessage_Placeholder')}
-									addon={<UserStatusMenu margin='neg-x2' onChange={handleStatusType} initialStatus={statusType as IUser['status']} />}
-								/>
-							</Field.Row>
-							{!allowUserStatusMessageChange && <Field.Hint>{t('StatusMessage_Change_Disabled')}</Field.Hint>}
-							<Field.Error>{statusTextError}</Field.Error>
-						</Field>
-					),
-					[t, statusTextError, allowUserStatusMessageChange, statusText, handleStatusText, handleStatusType, statusType],
-				)}
-				{useMemo(
-					() => (
-						<Field>
-							<Field.Label>{t('Nickname')}</Field.Label>
-							<Field.Row>
-								<TextInput
-									flexGrow={1}
-									value={nickname}
-									onChange={handleNickname}
-									addon={<Icon name='edit' size='x20' alignSelf='center' />}
-								/>
-							</Field.Row>
-						</Field>
-					),
-					[nickname, handleNickname, t],
-				)}
-				{useMemo(
-					() => (
-						<Field>
-							<Field.Label>{t('Bio')}</Field.Label>
-							<Field.Row>
-								<TextAreaInput
-									error={bioError}
-									rows={3}
-									flexGrow={1}
-									value={bio}
-									onChange={handleBio}
-									addon={<Icon name='edit' size='x20' alignSelf='center' />}
-								/>
-							</Field.Row>
-							<Field.Error>{bioError}</Field.Error>
-						</Field>
-					),
-					[bio, handleBio, bioError, t],
-				)}
-				{useMemo(
-					() => (
-						<Field>
-							<Field.Label>{t('Email')}</Field.Label>
-							<Field.Row display='flex' flexDirection='row' justifyContent='space-between'>
-								<TextInput
-									flexGrow={1}
-									value={email}
-									error={emailError}
-									onChange={handleEmail}
-									addon={<Icon name={verified ? 'circle-check' : 'mail'} size='x20' />}
-									disabled={!allowEmailChange}
-								/>
-								{!verified && (
-									<Button disabled={email !== previousEmail} onClick={handleSendConfirmationEmail} mis='x24'>
-										{t('Resend_verification_email')}
-									</Button>
-								)}
-							</Field.Row>
-							{!allowEmailChange && <Field.Hint>{t('Email_Change_Disabled')}</Field.Hint>}
-							<Field.Error>{t(emailError as TranslationKey)}</Field.Error>
-						</Field>
-					),
-					[t, email, emailError, handleEmail, verified, allowEmailChange, previousEmail, handleSendConfirmationEmail],
-				)}
-				{useMemo(
-					() => (
-						<Field>
-							<Field.Label>{t('New_password')}</Field.Label>
-							<Field.Row mbe='x4'>
-								<PasswordInput
-									autoComplete='off'
-									disabled={!allowPasswordChange}
-									error={showPasswordError ? passwordError : undefined}
-									flexGrow={1}
-									value={password}
-									onChange={handlePassword}
-									addon={<Icon name='key' size='x20' />}
-									placeholder={t('Create_a_password')}
-								/>
-							</Field.Row>
-							<Field.Row mbs='x4'>
-								<PasswordInput
-									autoComplete='off'
-									error={showPasswordError ? passwordError : undefined}
-									flexGrow={1}
-									value={confirmationPassword}
-									onChange={handleConfirmationPassword}
-									addon={<Icon name='key' size='x20' />}
-									placeholder={t('Confirm_password')}
-									disabled={!allowPasswordChange}
-								/>
-							</Field.Row>
-							{!allowPasswordChange && <Field.Hint>{t('Password_Change_Disabled')}</Field.Hint>}
-							{passwordError && <Field.Error>{showPasswordError ? passwordError : undefined}</Field.Error>}
-							{passwordVerifications && allowPasswordChange && (
-								<PasswordVerifier password={password} passwordVerifications={passwordVerifications} />
-							)}
-						</Field>
-					),
-					[
-						t,
-						allowPasswordChange,
-						showPasswordError,
-						passwordError,
-						password,
-						handlePassword,
-						confirmationPassword,
-						handleConfirmationPassword,
-						passwordVerifications,
-					],
-				)}
-
+				<Field>
+					<Field.Label>{t('StatusMessage')}</Field.Label>
+					<Field.Row>
+						<TextInput
+							error={statusTextError}
+							disabled={!allowUserStatusMessageChange}
+							flexGrow={1}
+							value={statusText}
+							onChange={handleStatusText}
+							placeholder={t('StatusMessage_Placeholder')}
+							addon={<UserStatusMenu margin='neg-x2' onChange={handleStatusType} initialStatus={statusType as IUser['status']} />}
+						/>
+					</Field.Row>
+					{!allowUserStatusMessageChange && <Field.Hint>{t('StatusMessage_Change_Disabled')}</Field.Hint>}
+					<Field.Error>{statusTextError}</Field.Error>
+				</Field>
+				<Field>
+					<Field.Label>{t('Nickname')}</Field.Label>
+					<Field.Row>
+						<TextInput flexGrow={1} value={nickname} onChange={handleNickname} addon={<Icon name='edit' size='x20' alignSelf='center' />} />
+					</Field.Row>
+				</Field>
+				<Field>
+					<Field.Label>{t('Bio')}</Field.Label>
+					<Field.Row>
+						<TextAreaInput
+							error={bioError}
+							rows={3}
+							flexGrow={1}
+							value={bio}
+							onChange={handleBio}
+							addon={<Icon name='edit' size='x20' alignSelf='center' />}
+						/>
+					</Field.Row>
+					<Field.Error>{bioError}</Field.Error>
+				</Field>
+				<Field>
+					<Field.Label>{t('Email')}</Field.Label>
+					<Field.Row display='flex' flexDirection='row' justifyContent='space-between'>
+						<TextInput
+							flexGrow={1}
+							value={email}
+							error={emailError}
+							onChange={handleEmail}
+							addon={<Icon name={verified ? 'circle-check' : 'mail'} size='x20' />}
+							disabled={!allowEmailChange}
+						/>
+						{!verified && (
+							<Button disabled={email !== previousEmail} onClick={handleSendConfirmationEmail} mis='x24'>
+								{t('Resend_verification_email')}
+							</Button>
+						)}
+					</Field.Row>
+					{!allowEmailChange && <Field.Hint>{t('Email_Change_Disabled')}</Field.Hint>}
+					<Field.Error>{t(emailError as TranslationKey)}</Field.Error>
+				</Field>
+				<Field>
+					<Field.Label>{t('New_password')}</Field.Label>
+					<Field.Row mbe='x4'>
+						<PasswordInput
+							autoComplete='off'
+							disabled={!allowPasswordChange}
+							error={showPasswordError ? passwordError : undefined}
+							flexGrow={1}
+							value={password}
+							onChange={handlePassword}
+							addon={<Icon name='key' size='x20' />}
+							placeholder={t('Create_a_password')}
+						/>
+					</Field.Row>
+					<Field.Row mbs='x4'>
+						<PasswordInput
+							autoComplete='off'
+							error={showPasswordError ? passwordError : undefined}
+							flexGrow={1}
+							value={confirmationPassword}
+							onChange={handleConfirmationPassword}
+							addon={<Icon name='key' size='x20' />}
+							placeholder={t('Confirm_password')}
+							disabled={!allowPasswordChange}
+						/>
+					</Field.Row>
+					{!allowPasswordChange && <Field.Hint>{t('Password_Change_Disabled')}</Field.Hint>}
+					{passwordError && <Field.Error>{showPasswordError ? passwordError : undefined}</Field.Error>}
+					{passwordVerifications && allowPasswordChange && (
+						<PasswordVerifier password={password} passwordVerifications={passwordVerifications} />
+					)}
+				</Field>
 				{customFieldsMetadata && <CustomFieldsForm formName='customFields' formControl={control} metadata={customFieldsMetadata} />}
 			</FieldGroup>
 		</Box>
