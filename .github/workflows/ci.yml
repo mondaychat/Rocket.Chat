@@ -380,8 +380,7 @@ jobs:
       CR_USER: ${{ secrets.CR_USER }}
       CR_PAT: ${{ secrets.CR_PAT }}
       QASE_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
-      REPORTER_ROCKETCHAT_API_KEY: ${{ secrets.REPORTER_ROCKETCHAT_API_KEY }}
-      REPORTER_ROCKETCHAT_URL: ${{ secrets.REPORTER_ROCKETCHAT_URL }}
+
 
   test-api-ee:
     name: 🔨 Test API (EE)
@@ -429,8 +428,7 @@ jobs:
       CR_USER: ${{ secrets.CR_USER }}
       CR_PAT: ${{ secrets.CR_PAT }}
       QASE_API_TOKEN: ${{ secrets.QASE_API_TOKEN }}
-      REPORTER_ROCKETCHAT_API_KEY: ${{ secrets.REPORTER_ROCKETCHAT_API_KEY }}
-      REPORTER_ROCKETCHAT_URL: ${{ secrets.REPORTER_ROCKETCHAT_URL }}
+
 
   tests-done:
     name: ✅ Tests Done
@@ -442,85 +440,6 @@ jobs:
         run: |
           echo finished
 
-  deploy:
-    name: 🚀 Publish build and update our registry
-    runs-on: ubuntu-20.04
-    if: github.event_name == 'release' || github.ref == 'refs/heads/develop'
-    needs: [tests-done, release-versions]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Restore build
-        uses: actions/download-artifact@v3
-        with:
-          name: build
-          path: /tmp/build
-
-      - name: Publish assets
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: 'us-east-1'
-          GPG_PASSWORD: ${{ secrets.GPG_PASSWORD }}
-          REDHAT_REGISTRY_PID: ${{ secrets.REDHAT_REGISTRY_PID }}
-          REDHAT_REGISTRY_KEY: ${{ secrets.REDHAT_REGISTRY_KEY }}
-          UPDATE_TOKEN: ${{ secrets.UPDATE_TOKEN }}
-        run: |
-          REPO_VERSION=$(node -p "require('./package.json').version")
-          if [[ '${{ github.event_name }}' = 'release' ]]; then
-            GIT_TAG="${GITHUB_REF#*tags/}"
-            GIT_BRANCH=""
-            ARTIFACT_NAME="${REPO_VERSION}"
-            RC_VERSION=$GIT_TAG
-
-            if [[ '${{ needs.release-versions.outputs.release }}' = 'release-candidate' ]]; then
-              SNAP_CHANNEL=candidate
-              RC_RELEASE=candidate
-            elif [[ '${{ needs.release-versions.outputs.release }}' = 'latest' ]]; then
-              SNAP_CHANNEL=stable
-              RC_RELEASE=stable
-            fi
-          else
-            GIT_TAG=""
-            GIT_BRANCH="${GITHUB_REF#*heads/}"
-            ARTIFACT_NAME="${REPO_VERSION}.$GITHUB_SHA"
-            RC_VERSION="${REPO_VERSION}"
-            SNAP_CHANNEL=edge
-            RC_RELEASE=develop
-          fi;
-          ROCKET_DEPLOY_DIR="/tmp/deploy"
-          FILENAME="$ROCKET_DEPLOY_DIR/rocket.chat-$ARTIFACT_NAME.tgz";
-
-          aws s3 cp s3://rocketchat/sign.key.gpg .github/sign.key.gpg
-
-          mkdir -p $ROCKET_DEPLOY_DIR
-
-          cp .github/sign.key.gpg /tmp
-          gpg --yes --batch --passphrase=$GPG_PASSWORD /tmp/sign.key.gpg
-          gpg --allow-secret-key-import --import /tmp/sign.key
-          rm /tmp/sign.key
-
-          ln -s /tmp/build/Rocket.Chat.tar.gz "$FILENAME"
-          gpg --armor --detach-sign "$FILENAME"
-
-          aws s3 cp $ROCKET_DEPLOY_DIR/ s3://download.rocket.chat/build/ --recursive
-
-          curl -H "Content-Type: application/json" -H "X-Update-Token: $UPDATE_TOKEN" -d \
-              "{\"nodeVersion\": \"${{ needs.release-versions.outputs.node-version }}\", \"compatibleMongoVersions\": [\"4.4\", \"5.0\", \"6.0\"], \"commit\": \"$GITHUB_SHA\", \"tag\": \"$RC_VERSION\", \"branch\": \"$GIT_BRANCH\", \"artifactName\": \"$ARTIFACT_NAME\", \"releaseType\": \"$RC_RELEASE\"}" \
-              https://releases.rocket.chat/update
-
-          # Makes build fail if the release isn't there
-          curl --fail https://releases.rocket.chat/$RC_VERSION/info
-
-          if [[ $GIT_TAG ]]; then
-            curl -X POST \
-              https://connect.redhat.com/api/v2/projects/$REDHAT_REGISTRY_PID/build \
-              -H "Authorization: Bearer $REDHAT_REGISTRY_KEY" \
-              -H 'Cache-Control: no-cache' \
-              -H 'Content-Type: application/json' \
-              -d '{"tag":"'$GIT_TAG'"}'
-          fi
 
   build-docker-preview:
     name: 🚢 Build Docker Image (preview)
@@ -555,7 +474,7 @@ jobs:
   docker-image-publish:
     name: 🚀 Publish Docker Image (main)
     runs-on: ubuntu-20.04
-    needs: [deploy, build-docker-preview, release-versions]
+    needs: [ build-docker-preview, release-versions]
 
     strategy:
       matrix:
@@ -563,7 +482,7 @@ jobs:
         release: ['official', 'preview', 'alpine']
 
     env:
-      IMAGE_NAME: 'rocketchat/rocket.chat'
+      IMAGE_NAME: 'mondaychat/rocket.chat'
 
     steps:
       - name: Login to DockerHub
@@ -666,7 +585,7 @@ jobs:
   services-docker-image-publish:
     name: 🚀 Publish Docker Image (services)
     runs-on: ubuntu-20.04
-    needs: [deploy, release-versions]
+    needs: [ release-versions]
 
     strategy:
       matrix:
@@ -705,7 +624,7 @@ jobs:
 
       - name: Publish Docker images
         run: |
-          DH_IMAGE_NAME="rocketchat/${{ matrix.service }}-service"
+          DH_IMAGE_NAME="mondaychat/${{ matrix.service }}-service"
 
           # 'develop' or 'tag'
           DOCKER_TAG=$GITHUB_REF_NAME
@@ -764,7 +683,7 @@ jobs:
         with:
           token: ${{ secrets.DISTRIBUTION_TOKEN }}
           event-type: new_release
-          repository: RocketChat/Release.Distributions
+          repository: MondayChat/Release.Distributions
           client-payload: '{"tag": "${{ github.ref_name }}"}'
 
       - name: Update docs
@@ -772,5 +691,5 @@ jobs:
         with:
           token: ${{ secrets.DOCS_PAT }}
           event-type: new_release
-          repository: RocketChat/docs
+          repository: MondayChat/docs
           client-payload: '{"tag": "${{ github.ref_name }}"}'
